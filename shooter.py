@@ -1,15 +1,18 @@
 import pygame
 import sys
+import random
 
 pygame.init()
 w=800
 h=720
 screen=pygame.display.set_mode((w,h))
 pygame.display.set_caption("SHOOTER")
+font=pygame.font.SysFont("Arial",40)
 
 clock=pygame.time.Clock()
 
 run=True
+score=0
 
 class player:
     
@@ -71,10 +74,71 @@ class bullet:
     def draw(self):
         pygame.draw.circle(screen,(10,10,10),(self.x,self.y),self.radius)
 
+class enemy:
+    def __init__(self):
 
+        while True:
+            self.x=random.randint(100,700)
+            self.y=random.randint(100,620)
+            self.speed=2
+            self.radius=10
+            dx=p.x-self.x
+            dy=p.y-self.y
+            dist=(dx**2+dy**2)**0.5
+
+            if dist>200:
+                break
+
+    def draw(self):
+        pygame.draw.circle(screen,(255,0,0),(self.x,self.y),self.radius)
+
+    def move(self,p):
+        dx=p.x-self.x
+        dy=p.y-self.y
+        dist=(dx**2+dy**2)**0.5
+        self.dx=dx/dist
+        self.dy=dy/dist
+        self.x+=self.speed*self.dx
+        self.y+=self.speed*self.dy
+    
+class collision:
+    def __init__(self):
+        return
+    
+    def enemy_bullet(self,p,bullets,enemies):
+        for b in bullets:
+            for e in enemies:
+                dx=b.x-e.x
+                dy=b.y-e.y
+                dist=(dx**2+dy**2)**0.5
+                if dist<=b.radius+e.radius:
+                    bullets.remove(b)
+                    enemies.remove(e)
+                    p.radius+=1
+                    return 1
+        return 0
+    
+    def enemy_player(self,p,enemies):
+        for e in enemies:
+            dx=p.x-e.x
+            dy=p.y-e.y
+            dist=(dx**2+dy**2)**0.5
+            if dist<=p.radius+e.radius:
+                enemies.remove(e)
+                p.radius-=6
+                return 1
+        return 0
+
+    
 
 p=player()
 bullets=[]
+enemies=[]
+c=collision()
+
+for i in range(3):
+    e=enemy()
+    enemies.append(e)
 
 while run:
     keys=pygame.key.get_pressed()
@@ -87,15 +151,31 @@ while run:
         if event.type==pygame.QUIT:
             run=False
 
+    p.move(keys)
+    p.draw()
+    p.boundary()
+
     for b in bullets:
         if b.x>w or b.x<0 or b.y<0 or b.y>h:
             bullets.remove(b)
         
         b.move()
         b.draw()
-    p.move(keys)
-    p.draw()
-    p.boundary()
+    
+    for e in enemies:
+        e.draw()
+        e.move(p)
+        
+    score+=c.enemy_bullet(p,bullets,enemies)
+    c.enemy_player(p,enemies)
+
+    if not enemies:
+        for i in range(3):
+            e=enemy()
+            enemies.append(e)
+
+    sc=font.render(f"SCORE:{score}",True,(0,0,0))
+    screen.blit(sc,(10,10))
     pygame.display.update()
     clock.tick(60)
 
