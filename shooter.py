@@ -131,23 +131,26 @@ class collision:
 
 class g_over:
     def __init__(self):
-        return
+        self.finish=False
+        self.game_over_time = 0
 
-    def over(self,p):
-        if p.radius<=0:
-            game_over=font.render("GAME OVER",True,(0,0,0))
-            screen.blit(game_over,(300,300))
-            screen.blit(sc,(300,340))
-            pygame.display.update()
-            pygame.time.delay(2400)
-            return False
-        return True           
+    def over(self, p):
+        if p.radius<= 0 and not self.finish:
+            self.finish=True
+            self.game_over_time=pygame.time.get_ticks()
+
+    def draw(self, sc):
+        game_over=font.render("GAME OVER",True,(0,0,0))
+        screen.blit(game_over,(300,300))
+        screen.blit(sc,(300,340))     
 
 p=player()
 bullets=[]
 enemies=[]
 c=collision()
+
 enemy_count=3
+g=g_over()
 
 for i in range(3):
     e=enemy()
@@ -164,32 +167,38 @@ while run:
         if event.type==pygame.QUIT:
             run=False
 
-    g=g_over()
-    run=g.over(p)
+    g.over(p)
 
-    p.move(keys)
+    if g.finish:
+        g.draw(sc)
+        if pygame.time.get_ticks()-g.game_over_time>3000:
+            run=False
+
+    
     p.draw()
     p.boundary()
-
-    for b in bullets:
-        if b.x>w or b.x<0 or b.y<0 or b.y>h:
-            bullets.remove(b)
-        
-        b.move()
-        b.draw()
     
-    for e in enemies:
-        e.draw()
-        e.move(p)
+    if not g.finish:
+        p.move(keys)
+        for b in bullets:
+            if b.x>w or b.x<0 or b.y<0 or b.y>h:
+                bullets.remove(b)
+            
+            b.move()
+            b.draw()
         
-    score+=c.enemy_bullet(p,bullets,enemies)
-    c.enemy_player(p,enemies)
+        for e in enemies:
+            e.draw()
+            e.move(p)
+            
+        score+=c.enemy_bullet(p,bullets,enemies)
+        c.enemy_player(p,enemies)
 
-    if not enemies:
-        enemy_count+=1
-        for i in range(enemy_count):
-            e=enemy()
-            enemies.append(e)
+        if not enemies:
+            enemy_count+=1
+            for i in range(enemy_count):
+                e=enemy()
+                enemies.append(e)
 
     sc=font.render(f"SCORE:{score}",True,(0,0,0))
     screen.blit(sc,(10,10))
