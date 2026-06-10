@@ -114,7 +114,7 @@ class collision:
                 if dist<=b.radius+e.radius:
                     bullets.remove(b)
                     enemies.remove(e)
-                    p.radius+=1
+                    p.radius+=e.radius
                     return 1
         return 0
     
@@ -125,16 +125,29 @@ class collision:
             dist=(dx**2+dy**2)**0.5
             if dist<=p.radius+e.radius:
                 enemies.remove(e)
-                p.radius-=6
+                p.radius-=e.radius
                 return 1
         return 0
 
-    
+class g_over:
+    def __init__(self):
+        return
+
+    def over(self,p):
+        if p.radius<=0:
+            game_over=font.render("GAME OVER",True,(0,0,0))
+            screen.blit(game_over,(300,300))
+            screen.blit(sc,(300,340))
+            pygame.display.update()
+            pygame.time.delay(2400)
+            return False
+        return True           
 
 p=player()
 bullets=[]
 enemies=[]
 c=collision()
+enemy_count=3
 
 for i in range(3):
     e=enemy()
@@ -150,6 +163,9 @@ while run:
             bullets.append(b)
         if event.type==pygame.QUIT:
             run=False
+
+    g=g_over()
+    run=g.over(p)
 
     p.move(keys)
     p.draw()
@@ -170,7 +186,8 @@ while run:
     c.enemy_player(p,enemies)
 
     if not enemies:
-        for i in range(3):
+        enemy_count+=1
+        for i in range(enemy_count):
             e=enemy()
             enemies.append(e)
 
